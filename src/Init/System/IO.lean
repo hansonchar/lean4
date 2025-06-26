@@ -890,6 +890,12 @@ Returns the value of the environment variable `var`, or `none` if it is not pres
 environment.
 -/
 @[extern "lean_io_getenv"] opaque getEnv (var : @& String) : BaseIO (Option String)
+
+/--
+Sets the environment variable `var` to `value`. Returns `true` on success, `false` on failure.
+-/
+@[extern "lean_io_setenv"] opaque setEnv (var : @& String) (value : @& String) : BaseIO Bool
+
 /--
 Returns the file name of the currently-running executable.
 -/
@@ -1715,7 +1721,7 @@ def readToEnd (s : Stream) : IO String := do
   match String.fromUTF8? data with
   | some s => return s
   | none => throw <| .userError s!"Tried to read from stream containing non UTF-8 data."
-  
+
 /--
 Reads the entire remaining contents of the stream as a UTF-8-encoded array of lines.
 

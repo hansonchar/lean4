@@ -954,6 +954,32 @@ extern "C" LEAN_EXPORT obj_res lean_io_getenv(b_obj_arg env_var, obj_arg) {
 #endif
 }
 
+extern "C" LEAN_EXPORT obj_res lean_io_setenv(b_obj_arg env_var, b_obj_arg env_val, obj_arg) {
+#if defined(LEAN_EMSCRIPTEN)
+    // Set environment variable in Emscripten
+    EM_ASM({
+        var envVar = UTF8ToString($0);
+        var envVal = UTF8ToString($1);
+        ENV[envVar] = envVal;
+    }, string_cstr(env_var), string_cstr(env_val));
+
+    return io_result_mk_ok(lean_box(1)); // Return true (success)
+#else
+    // Use setenv on POSIX systems, _putenv_s on Windows
+#if defined(_WIN32)
+    int result = _putenv_s(string_cstr(env_var), string_cstr(env_val));
+#else
+    int result = setenv(string_cstr(env_var), string_cstr(env_val), 1); // 1 = overwrite
+#endif
+
+    if (result == 0) {
+        return io_result_mk_ok(lean_box(1)); // Success, return true
+    } else {
+        return io_result_mk_ok(lean_box(0)); // Failure, return false
+    }
+#endif
+}
+
 extern "C" LEAN_EXPORT obj_res lean_io_realpath(obj_arg fname, obj_arg) {
 #if defined(LEAN_WINDOWS)
     constexpr unsigned BufferSize = 8192;
